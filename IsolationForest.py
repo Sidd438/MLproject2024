@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-
+from sklearn.model_selection import train_test_split
+from matplotlib import pyplot as plt
 
 def normalizer(size):
     if size == 2:
@@ -69,9 +70,27 @@ class IsolationForest:
     
 
 if __name__ == '__main__':
-    df = pd.read_csv('cancer.csv')
-    X = df.drop(['diagnosis'], axis=1).values
-    y = df['diagnosis'].values
-    iforest = IsolationForest(n_trees=100, height_limit=20).fit(X)
-    anomaly = ((iforest.anomaly_score(X)))
-    print(anomaly[anomaly > 0.5].shape)
+    df = pd.read_csv('http.csv')
+    df = df.sample(frac=1).reset_index(drop=True)
+    # df = df[:10000]
+    trainx, testx, trainy, testy = train_test_split(df.drop(['attack'], axis=1).values, df['attack'].values, test_size=0.2)
+    iforest = IsolationForest(n_trees=100, height_limit=10).fit(trainx[trainy==0])
+    anomaly = iforest.anomaly_score(testx)
+    testy_pred = np.where(anomaly > 0.7, 1, 0)
+
+    #show confusion matrix to check directional accuracy
+    from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, f1_score
+    cm = confusion_matrix(testy>=0, testy_pred>=0)
+    # disp = ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=['negative','positive'])
+    # disp.plot()
+    # plt.show()
+    print("Outlier predictions:",np.sum(testy_pred>0))
+    print("Inlier predictions:",np.sum(testy_pred<=0))
+    print("Outlier actuals:",np.sum(testy>0))
+    print("Inlier actuals:",np.sum(testy<=0))
+    print(f'Accuracy score: {accuracy_score(testy>0, testy_pred>0) :>.3%}')
+    print(f'F1 score: {f1_score(testy>0, testy_pred>0) :>.3}')
+    # print(Y[Y==1].shape)
+    
+
+    # print(anomaly[anomaly > 0.5].shape)
