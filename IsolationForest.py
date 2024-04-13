@@ -76,7 +76,7 @@ if __name__ == '__main__':
     trainx, testx, trainy, testy = train_test_split(df.drop(['attack'], axis=1).values, df['attack'].values, test_size=0.2)
     iforest = IsolationForest(n_trees=100, height_limit=10).fit(trainx[trainy==0])
     anomaly = iforest.anomaly_score(testx)
-    testy_pred = np.where(anomaly > 0.7, 1, 0)
+    testy_pred = np.where(anomaly > 0.9, 1, 0)
 
     #show confusion matrix to check directional accuracy
     from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, f1_score
