@@ -2,6 +2,14 @@ import numpy as np
 import pandas as pd
 
 
+def normalizer(size):
+    if size == 2:
+        return 1
+    elif size > 2:
+        return 2 * (np.log(size - 1) + 0.5772156649) - 2 * (size - 1) / size
+    return 0
+
+
 class IsolationTree:
 
     def __init__(self, height_limit, current_height=0):
@@ -33,9 +41,9 @@ class IsolationTree:
     def path_length(self, X, current_height=0):
         # print(X.shape, self.current_height, self.height_limit)
         if self.current_height >= self.height_limit or X.shape[0] <= 1 or self.split_value is None:
-            return self.current_height
-        print(self.split_value, self.current_height, X.shape)
-        return current_height + (X[:, self.split_by] < self.split_value) * self.left.path_length(X, current_height + 1) + (X[:, self.split_by] >= self.split_value) * self.right.path_length(X, current_height + 1)
+            return np.full(X.shape[0], current_height)
+        ans =  (X[:, self.split_by] < self.split_value) * self.left.path_length(X, current_height + 1) + (X[:, self.split_by] >= self.split_value) * self.right.path_length(X, current_height + 1)
+        return ans
 
 
 class IsolationForest:
@@ -46,6 +54,7 @@ class IsolationForest:
         self.trees = []
 
     def fit(self, X):
+        self.len = X.shape[0]
         self.trees = [IsolationTree(self.height_limit).fit(X) for _ in range(self.n_trees)]
         return self
     
@@ -55,10 +64,14 @@ class IsolationForest:
     def path_length(self, X):
         return np.mean([tree.path_length(X) for tree in self.trees], axis=0)
     
+    def anomaly_score(self, X):
+        return 2 ** (-self.path_length(X) / normalizer(self.len))
+    
 
 if __name__ == '__main__':
     df = pd.read_csv('cancer.csv')
     X = df.drop(['diagnosis'], axis=1).values
     y = df['diagnosis'].values
-    iforest = IsolationForest(n_trees=100, height_limit=10).fit(X)
-    print(iforest.path_length(X))
+    iforest = IsolationForest(n_trees=100, height_limit=20).fit(X)
+    anomaly = ((iforest.anomaly_score(X)))
+    print(anomaly[anomaly > 0.5].shape)
