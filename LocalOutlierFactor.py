@@ -16,18 +16,21 @@ class LocalOutlierFactor:
         self.n_neighbors = n_neighbors
         self.local_outlier_factor_threshold = local_outlier_factor_threshold
         self.eps = eps
-        self.neighbors = NearestNeighbors(n_neighbors=self.n_neighbors)
+        self.neighbors = NearestNeighbors(n_neighbors=self.n_neighbors + 1) # one additional neighbor for finding the k neighbors of points in the training dataset excluding itself 
     
     def fit(self, train_oneclassdata):
         self.train_oneclassdata = np.unique(train_oneclassdata, axis=0)
         self.neighbors.fit(self.train_oneclassdata)
-        self.k_distance_list = self.k_distance_and_indices(self.train_oneclassdata)[0][:,-1]
+        self.k_distance_list = self.k_distance_and_indices(self.train_oneclassdata,withinDataset=True)[0][:,-1]
         self.neighborhood_density_list = self.calculate_neighborhood_density(self.train_oneclassdata)
         return self
     
-    def k_distance_and_indices(self, X):
+    def k_distance_and_indices(self, X, withinDataset = False):
         distances, indices = self.neighbors.kneighbors(X)
-        return distances, indices
+        if(withinDataset):
+            return distances[:,1:], indices[:,1:]
+        else:
+            return distances[:,:-1],indices[:,:-1]
     
     def calculate_neighborhood_density(self,X):
         k_distances, k_nearest_neighbours = self.k_distance_and_indices(X)
