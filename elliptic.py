@@ -1,16 +1,11 @@
 # elliptic envelope for imbalanced classification
-from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
-from sklearn.base import OutlierMixin
 from sklearn.covariance import MinCovDet
 import numpy as np
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, f1_score
 from matplotlib import pyplot as plt
-from tqdm import tqdm
 from sklearn.metrics.pairwise import pairwise_distances
 import pandas as pd
-import warnings  
   
 # warnings.filterwarnings('ignore')  
 
